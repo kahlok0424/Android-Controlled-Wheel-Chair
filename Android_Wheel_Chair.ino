@@ -49,13 +49,17 @@ MotorInfo rightMotorInfo = {
 
 typedef struct AngleSpeed AngleSpeed;
 struct  AngleSpeed {
-  float decimalSpeed;
-  float Angle; 
+  int Speed;
+  int Angle;
+  int previousAngle;
+  int previousSpeed; 
 };
 
 AngleSpeed instruction ={
-  .decimalSpeed = 0.0 ,
+  .Speed = 0.0 ,
   .Angle = 270.00 ,
+  .previousAngle = 270,
+  .previousSpeed = 0,
 };
 
 void setup() {
@@ -127,56 +131,59 @@ void Calculation(AngleSpeed *MainInfo , MotorInfo *leftMotor , MotorInfo *rightM
  
   int x = 4;   //calculated value based on the revolution
   int y = 2;    //calculated value negative angle
-  int floatAngle = (int)(MainInfo->Angle);
-  int Speed = (int)(MainInfo->decimalSpeed);
-  
-  if( 180 <= (floatAngle) && ( floatAngle) < 360 )
+
+  if(MainInfo->previousAngle != MainInfo->Angle){
+    MainInfo->previousAngle = MainInfo->Angle;
+  if( 180 <= (MainInfo->Angle) && (MainInfo->Angle) < 360 )
   {
     leftMotor -> dir = MOTOR_LEFT_FOWARD ;
     rightMotor -> dir = MOTOR_RIGHT_FOWARD;
-     if( 180 < (floatAngle) && ( floatAngle) < 270 )
+     if( 180 < (MainInfo->Angle) && ( MainInfo->Angle) < 270 )
      {
-        leftMotor -> delay = (unsigned long ) ( ( 360 - floatAngle) * x );
-       rightMotor -> delay = (unsigned long) ( ( floatAngle - 90 ) * y ) ;
+        leftMotor -> delay = (unsigned long ) ( ( 360 - MainInfo->Angle) * x );
+       rightMotor -> delay = (unsigned long) ( ( MainInfo->Angle - 90 ) * y ) ;
      }
      else // if ( 270 <= (MainInfo-> floatAngle) && ( MainInfo-> floatAngle) < 360)
      {
-      leftMotor -> delay = (unsigned long) ( (450 - floatAngle ) * y ) ;
-      rightMotor -> delay = (unsigned long) ( ( floatAngle - 180 ) * x ); 
+      leftMotor -> delay = (unsigned long) ( (450 - MainInfo->Angle ) * y ) ;
+      rightMotor -> delay = (unsigned long) ( ( MainInfo->Angle - 180 ) * x ); 
       }
     }
-   else if ( 0 <= (floatAngle ) && ( floatAngle) < 180 )
+   else if ( 0 <= (MainInfo->Angle ) && ( MainInfo->Angle) < 180 )
       {
         leftMotor -> dir = MOTOR_LEFT_BACKWARD ;
         rightMotor -> dir = MOTOR_RIGHT_BACKWARD;
-          if( 0 <= (floatAngle) && ( floatAngle) <90)
+          if( 0 <= (MainInfo->Angle) && ( MainInfo->Angle) <90)
           {
-             leftMotor -> delay = (unsigned long ) ( (floatAngle + 90) * y );
-             rightMotor -> delay = (unsigned long) ( (  floatAngle + 90 ) * x ) ;
+             leftMotor -> delay = (unsigned long ) ( (MainInfo->Angle + 90) * y );
+             rightMotor -> delay = (unsigned long) ( ( MainInfo->Angle + 90 ) * x ) ;
             }
             else //if ( 90 <= (MainInfo -> floatAngle) <180)
             {
-              leftMotor -> delay = (unsigned long) ( ( floatAngle) * x );
-              rightMotor -> delay = (unsigned long) ( ( 270 - floatAngle ) * y );             
+              leftMotor -> delay = (unsigned long) ( ( MainInfo->Angle) * x );
+              rightMotor -> delay = (unsigned long) ( ( 270 - MainInfo->Angle ) * y );             
               }
         }
+  }
+        if(MainInfo->previousSpeed != MainInfo->Speed){
+          MainInfo->previousSpeed = MainInfo->Speed;
+        int cSpeed = ( (MainInfo->Speed ) * 2.00 );
         
-        Speed = ( (Speed ) * 2.00 );
-       
-        if( 1.00 <= ( Speed) && (Speed) <= 2.00 )
+        if( 1.00 <= ( cSpeed) && (cSpeed) <= 2.00 )
         {
-          leftMotor -> delay = (unsigned long) ( (leftMotor ->delay) / Speed ) ;  
-          rightMotor -> delay = (unsigned long) ( (rightMotor -> delay) / Speed) ;
+          leftMotor -> delay = (unsigned long) ( (leftMotor ->delay) / cSpeed ) ;  
+          rightMotor -> delay = (unsigned long) ( (rightMotor -> delay) / cSpeed) ;
         }
-          else if( Speed == 0 )
+          else if( cSpeed == 0 )
           {
             ForceStop(leftMotor ,rightMotor);
             }
-          else if ( 0.00 < ( Speed) && (Speed) < 1.00 )
+          else if ( 0.00 < ( cSpeed) && (cSpeed) < 1.00 )
           {
-             leftMotor -> delay = (unsigned long)  ( ( ( 1 - (Speed) )+ 1 )* leftMotor -> delay ) ;
-             rightMotor -> delay = (unsigned long) ( ( ( 1 - ( Speed) )+ 1 )* rightMotor -> delay ) ;            
+             leftMotor -> delay = (unsigned long)  ( ( ( 1 - (cSpeed) )+ 1 )* leftMotor -> delay ) ;
+             rightMotor -> delay = (unsigned long) ( ( ( 1 - ( cSpeed) )+ 1 )* rightMotor -> delay ) ;            
             }
+        }
   } 
 
 void handling(AngleSpeed *MainInfo){
@@ -201,7 +208,7 @@ void handling(AngleSpeed *MainInfo){
       Serial.println("parseObject() failed");
       return;
     }
-   MainInfo->decimalSpeed = root["offset"];
+   MainInfo->Speed = root["offset"];
    MainInfo->Angle = root["degrees"];  
   });
 }  
@@ -211,7 +218,6 @@ void handleUturn(MotorInfo *leftMotor , MotorInfo *rightMotor){
      leftMotor->steps = 0;
      rightMotor->steps = 0;   
      Uturn(leftMotor ,rightMotor);
-    // Serial.println("uturn");
   });
   return;
 }

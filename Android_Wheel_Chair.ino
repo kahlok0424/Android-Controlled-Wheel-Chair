@@ -119,7 +119,6 @@ void Uturn(MotorInfo *leftInfo , MotorInfo *rightInfo)
   }
 }
 
-
 void ForceStop(MotorInfo *leftInfo , MotorInfo *rightInfo)
 {
   leftInfo-> delay = -1;
@@ -128,63 +127,47 @@ void ForceStop(MotorInfo *leftInfo , MotorInfo *rightInfo)
 
 void Calculation(AngleSpeed *MainInfo , MotorInfo *leftMotor , MotorInfo *rightMotor)
 {
- 
-  int x = 4;   //calculated value based on the revolution
-  int y = 2;    //calculated value negative angle
+    float x =0.0;
+    float y =0.0;
 
-  if(MainInfo->previousAngle != MainInfo->Angle){
-    MainInfo->previousAngle = MainInfo->Angle;
-  if( 180 <= (MainInfo->Angle) && (MainInfo->Angle) < 360 )
-  {
-    leftMotor -> dir = MOTOR_LEFT_FOWARD ;
-    rightMotor -> dir = MOTOR_RIGHT_FOWARD;
-     if( 180 < (MainInfo->Angle) && ( MainInfo->Angle) < 270 )
+      if( MainInfo->Speed == 0 )
      {
-        leftMotor -> delay = (unsigned long ) ( ( 360 - MainInfo->Angle) * x );
-       rightMotor -> delay = (unsigned long) ( ( MainInfo->Angle - 90 ) * y ) ;
-     }
-     else // if ( 270 <= (MainInfo-> floatAngle) && ( MainInfo-> floatAngle) < 360)
-     {
-      leftMotor -> delay = (unsigned long) ( (450 - MainInfo->Angle ) * y ) ;
-      rightMotor -> delay = (unsigned long) ( ( MainInfo->Angle - 180 ) * x ); 
+      // ForceStop(leftMotor ,rightMotor);
+      }
+
+   if(MainInfo->previousSpeed != MainInfo->Speed){
+    MainInfo->previousSpeed = MainInfo->Speed;
+    leftMotor->delay = 6000 / MainInfo->Speed;
+    rightMotor->delay = 6000 / MainInfo->Speed;
+   }
+
+   if(MainInfo->previousAngle != MainInfo->Angle)
+   {
+      MainInfo->previousAngle = MainInfo->Angle;
+    if( 0 <= MainInfo->Angle && MainInfo->Angle <= 180)
+      {
+      leftMotor -> dir = MOTOR_LEFT_FOWARD ;
+      rightMotor -> dir = MOTOR_RIGHT_FOWARD;
+      x = (float) (MainInfo->Angle /180.0);
+      y = (float) (1 - (MainInfo->Angle/180.0));
+      printf("x = %f \n",x);
+      printf("y = %f \n",y);
+      leftMotor -> delay = (unsigned long)(leftMotor->delay * x);
+      rightMotor -> delay = (unsigned long)( rightMotor->delay * y);
+      }
+    else if( 180 < MainInfo->Angle && MainInfo->Angle <= 360)
+      {
+      leftMotor -> dir = MOTOR_LEFT_BACKWARD;
+      rightMotor -> dir = MOTOR_RIGHT_BACKWARD;
+      x = (float)(MainInfo->Angle /360.0);
+      y = (float)(1 - (MainInfo->Angle/360.0));
+      leftMotor -> delay = (unsigned long)(y * leftMotor->delay);
+      rightMotor -> delay = (unsigned long)(x * rightMotor->delay);
       }
     }
-   else if ( 0 <= (MainInfo->Angle ) && ( MainInfo->Angle) < 180 )
-      {
-        leftMotor -> dir = MOTOR_LEFT_BACKWARD ;
-        rightMotor -> dir = MOTOR_RIGHT_BACKWARD;
-          if( 0 <= (MainInfo->Angle) && ( MainInfo->Angle) <90)
-          {
-             leftMotor -> delay = (unsigned long ) ( (MainInfo->Angle + 90) * y );
-             rightMotor -> delay = (unsigned long) ( ( MainInfo->Angle + 90 ) * x ) ;
-            }
-            else //if ( 90 <= (MainInfo -> floatAngle) <180)
-            {
-              leftMotor -> delay = (unsigned long) ( ( MainInfo->Angle) * x );
-              rightMotor -> delay = (unsigned long) ( ( 270 - MainInfo->Angle ) * y );             
-              }
-        }
   }
-        if(MainInfo->previousSpeed != MainInfo->Speed){
-          MainInfo->previousSpeed = MainInfo->Speed;
-        int cSpeed = ( (MainInfo->Speed ) * 2.00 );
-        
-        if( 1.00 <= ( cSpeed) && (cSpeed) <= 2.00 )
-        {
-          leftMotor -> delay = (unsigned long) ( (leftMotor ->delay) / cSpeed ) ;  
-          rightMotor -> delay = (unsigned long) ( (rightMotor -> delay) / cSpeed) ;
-        }
-          else if( cSpeed == 0 )
-          {
-            ForceStop(leftMotor ,rightMotor);
-            }
-          else if ( 0.00 < ( cSpeed) && (cSpeed) < 1.00 )
-          {
-             leftMotor -> delay = (unsigned long)  ( ( ( 1 - (cSpeed) )+ 1 )* leftMotor -> delay ) ;
-             rightMotor -> delay = (unsigned long) ( ( ( 1 - ( cSpeed) )+ 1 )* rightMotor -> delay ) ;            
-            }
-        }
-  } 
+   
+
 
 void handling(AngleSpeed *MainInfo){
   server.on("/body", [MainInfo](){   
